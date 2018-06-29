@@ -148,7 +148,7 @@ def test_motor():
   write_volume(str(new_volume))
   volume_diff(new_volume,prev_volume) # Calculates and sends diff to motor
   prev_volume = new_volume
-  return prev_volume
+  #return prev_volume
 
 
 
