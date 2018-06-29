@@ -1,19 +1,19 @@
-# flag_btc1b.py (first test motor control and BTC volume checking code)
+# flag_btc1b.py (first test motor control and saving volume to file)
 # Load from CLI: python3 -i flag_btc1b.py
 
 # logging and main loop turned off
 # based on 4 step 'Basic Stepper Code'
 # and btc_volume01.py (for the BTC volume check code)
 
-# To do: see if I can make use of older autocalibrate code...
 # Current range: 0 - 8600 steps
 # Time to complete range approx. 1:30
-# maximum 5 min volume I've seen until now is 2500
+# maximum 5 min volume I've seen up until now is 2500
 
 import datetime
-import requests, json
 import time
-import sys
+import requests, json
+# import sys # for logging
+import os.path # for volume file check
 import RPi.GPIO as GPIO
 
 '''
@@ -28,7 +28,8 @@ URL3 = "https://min-api.cryptocompare.com/data/histominute?fsym=BTC&tsym=USD&agg
 
 wait = .01 # time to pause between motor steps
 pos = 1 # values 0 to 8
-count = 0 # motor counter
+
+#count = 0 # motor counter
 
 GPIO.setmode(GPIO.BCM)
 #GPIO.setwarnings(True)
@@ -40,10 +41,9 @@ GPIO.setup(23, GPIO.OUT)
 GPIO.setup(24, GPIO.OUT)
 GPIO.setup(25, GPIO.OUT)
 
-print('Use: steps(num)')
+print('Use: test_motor()')
 
 #---STEPPER MOTOR CONTROL CODE---
-
 def step(pos):
   if pos==0:
     #print('Pos: 0')
@@ -105,6 +105,53 @@ def steps(num): # 4 STEP COUNTER-CLOCKWISE MOTOR ROTATION
 
 #GPIO.cleanup()
 
+
+
+#---LOADING AND CALCULATING VOLUME DIFFERENCES---
+# loads prev_volume or initialises it if it doesn't exist
+def load_volume():
+  if os.path.isfile('volume.txt'):
+    file_in = open('volume.txt','rt')
+    prev_volume = int(file_in.read()) # convert string into integer
+    file_in.close()
+    return prev_volume
+  else:
+    file_out = open('volume.txt','wt')
+    file_out.write('0')
+    file_out.close()
+    return 0
+
+
+# write volume to file
+def write_volume(s):
+  file_out = open('volume.txt','wt')
+  file_out.write(s)
+  file_out.close()
+
+
+# calculate difference between new_volume and prev_volume
+def volume_diff(new_volume, prev_volume):
+  volume_diff = new_volume - prev_volume
+  steps(volume_diff) # Send to motor
+  print('Volume difference: ',volume_diff)
+
+  
+
+prev_volume = load_volume()
+print('Previous volume: ',prev_volume)
+
+def test_motor():
+  new_volume = int(input('Input a new volume: '))
+  write_volume(str(new_volume))
+  volume_diff(new_volume,prev_volume)
+
+
+
+
+
+
+'''
+
 # ---BTC VOLUME CHECK CODE 
 
 # get BTC market volume using the Cryptocompare 5 MINUTE API
@@ -128,6 +175,14 @@ def get_BTC_5_min_volume():
 def convert_seconds(secs): #used in logging
   converted = datetime.datetime.fromtimestamp(secs).strftime('%Y-%m-%d %H:%M:%S')
   return converted
+
+
+
+#---TEST CODE---
+def test():
+  get_BTC_5_min_volume()
+  
+'''
 
 
 '''
