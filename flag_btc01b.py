@@ -28,7 +28,7 @@ URL3 = "https://min-api.cryptocompare.com/data/histominute?fsym=BTC&tsym=USD&agg
 
 wait = .01 # time to pause between motor steps
 pos = 1 # values 0 to 8
-
+motor_factor = 3 # volume multiplication factor for num of motor steps()
 #count = 0 # motor counter
 
 GPIO.setmode(GPIO.BCM)
@@ -80,7 +80,8 @@ def step(pos):
 
 def steps(num): # 4 STEP COUNTER-CLOCKWISE MOTOR ROTATION
   global pos # current position
-  global count # current counter
+  #global count # current counter
+  num = num * motor_factor
   if num > 0:
     for i in range (0, abs(num)):
       step(pos)
@@ -130,6 +131,7 @@ def write_volume(s):
 
 
 # calculate difference between new_volume and prev_volume
+# and send to motor
 def volume_diff(new_volume, prev_volume):
   volume_diff = new_volume - prev_volume
   steps(volume_diff) # Send to motor
