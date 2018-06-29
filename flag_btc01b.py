@@ -85,7 +85,7 @@ def steps(num): # 4 STEP COUNTER-CLOCKWISE MOTOR ROTATION
     for i in range (0, abs(num)):
       step(pos)
       time.sleep(wait)
-      count += 1 #add 1 to counter
+      #count += 1 #add 1 to counter
       #--- Begin code that determines direction of rotation
       if(pos == 1):
         pos = 5
@@ -95,7 +95,7 @@ def steps(num): # 4 STEP COUNTER-CLOCKWISE MOTOR ROTATION
     for i in range (0, abs(num)):
       step(pos)
       time.sleep(wait)
-      count -= 1 #subtract 1 from counter
+      #count -= 1 #subtract 1 from counter
       #--- Begin code that determines direction of rotation
       pos += 1 # add 1 to motor pos
       if(pos >= 5):
