@@ -147,13 +147,14 @@ def test_motor():
   #prev_volume = load_volume()
   print('Previous volume: ',prev_volume)
   new_volume = int(input('Input a new volume: '))
-  #---TEST THAT NEW VOLUME IS NOT LARGER THAN 2900---
-  if new_volume <= 2900:
+  #---TEST THAT NEW VOLUME IS NOT LARGER THAN 3000---
+  if new_volume <= 3000:
     write_volume(str(new_volume))
     volume_diff(new_volume,prev_volume) # Calculate and send diff to motor
   else:
-    print('5  min volume larger than 2900!')
-    new_volume = 2900
+    print('5 minute volume exceeds 3000!')
+    print('Setting volume to 3000')
+    new_volume = 3000
     write_volume(str(new_volume))
     volume_diff(new_volume,prev_volume) # Calculate and send diff to motor
   #---END NEW VOLUME TEST
