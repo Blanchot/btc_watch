@@ -23,13 +23,13 @@ logging.basicConfig(level=logging.INFO, filename='BTC_flag_log.log', format=form
 logging.info('Begin 5 Minute BTC Flag/Volume Log')
 
 interval_List = (2,7,12,17,22,27,32,37,42,47,52,57) #times to check- 2 min after each 5 min interval
-URL3 = "https://min-api.cryptocompare.com/data/histominute?fsym=BTC&tsym=USD&aggregate=5&limit=3"
+URL = "https://min-api.cryptocompare.com/data/histominute?fsym=BTC&tsym=USD&aggregate=5&limit=3"
 '''
 
 wait = .01 # time to pause between motor steps
-pos = 1 # values 0 to 8
+pos = 1 # stepper motor position (values 0 to 8)
 motor_factor = 3 # volume multiplication factor for num of motor steps()
-#count = 0 # motor counter
+
 
 GPIO.setmode(GPIO.BCM)
 #GPIO.setwarnings(True)
@@ -77,7 +77,6 @@ def step(pos):
     GPIO.output(25,1)
 
 
-
 def steps(num): # 4 STEP COUNTER-CLOCKWISE MOTOR ROTATION
   global pos # current position
   #global count # current counter
@@ -104,9 +103,7 @@ def steps(num): # 4 STEP COUNTER-CLOCKWISE MOTOR ROTATION
       #--- End code that determines direction of rotation
   step(0) # Turn motor off
 
-#GPIO.cleanup()
-
-
+#---END MOTOR CONTROL CODE
 
 #---LOADING AND CALCULATING VOLUME DIFFERENCES---
 # loads prev_volume or initialises it if it doesn't exist
@@ -137,42 +134,16 @@ def volume_diff(new_volume, prev_volume):
   steps(volume_diff) # Send to motor
   print('Volume difference: ',volume_diff)
 
-  
 
 prev_volume = load_volume()
 print('Previous volume: ',prev_volume)
+#---END LOADING AND CALCULATING VOLUME DIFFERENCES---
 
-def test_motor():
-  global prev_volume
-  #prev_volume = load_volume()
-  print('Previous volume: ',prev_volume)
-  new_volume = int(input('Input a new volume: '))
-  #---TEST THAT NEW VOLUME IS NOT LARGER THAN 3000---
-  if new_volume <= 3000:
-    write_volume(str(new_volume))
-    volume_diff(new_volume,prev_volume) # Calculate and send diff to motor
-  else:
-    print('5 minute volume exceeds 3000!')
-    print('Setting volume to 3000')
-    new_volume = 3000
-    write_volume(str(new_volume))
-    volume_diff(new_volume,prev_volume) # Calculate and send diff to motor
-  #---END NEW VOLUME TEST
-  prev_volume = new_volume
-  #return prev_volume
-
-
-
-
-
-'''
-
-# ---BTC VOLUME CHECK CODE 
-
+# ---BEGIN BTC VOLUME CHECK CODE---
 # get BTC market volume using the Cryptocompare 5 MINUTE API
 def get_BTC_5_min_volume():
   try:
-    r = requests.get(URL3)
+    r = requests.get(URL)
     market_volume_txt = json.loads(r.text)
     #time1 = json.loads(r.text)['Data'][0]['time']
     #volume1 = json.loads(r.text)['Data'][0]['volumefrom']
@@ -191,32 +162,56 @@ def convert_seconds(secs): #used in logging
   converted = datetime.datetime.fromtimestamp(secs).strftime('%Y-%m-%d %H:%M:%S')
   return converted
 
+#---END BTC VOLUME CHECK CODE---
 
-
-#---TEST CODE---
-def test():
-  get_BTC_5_min_volume()
-  
 '''
+def test_motor():
+  global prev_volume
+  print('Previous volume: ',prev_volume)
+  new_volume = int(input('Input a new volume: '))
+  #---TEST THAT NEW VOLUME IS NOT LARGER THAN 3000---
+  if new_volume <= 3000:
+    write_volume(str(new_volume))
+    volume_diff(new_volume,prev_volume) # Calculate and send diff to motor
+  else:
+    print('5 minute volume exceeds 3000!')
+    print('Setting volume to 3000')
+    new_volume = 3000
+    write_volume(str(new_volume))
+    volume_diff(new_volume,prev_volume) # Calculate and send diff to motor
+  #---END NEW VOLUME TEST
+  prev_volume = new_volume
+'''
+
+def run_motor(new_volume):
+  global prev_volume
+  print('Previous volume: ',prev_volume)
+  #---TEST THAT NEW VOLUME IS NOT LARGER THAN 3000---
+  if new_volume <= 3000:
+    write_volume(str(new_volume))
+    volume_diff(new_volume,prev_volume) # Calculate and send diff to motor
+  else:
+    print('5 minute volume exceeds 3000!')
+    print('Setting volume to 3000')
+    new_volume = 3000
+    write_volume(str(new_volume))
+    volume_diff(new_volume,prev_volume) # Calculate and send diff to motor
+  #---END NEW VOLUME TEST
+  prev_volume = new_volume
+
 
 
 '''
 while True: # main loop
   tijd = time.localtime() #create a struct_time object
   if tijd[4] in interval_List: #and check if the number of minutes is in the interval_List
-    time3, volume3 = get_BTC_5_min_volume()
+    time, new_volume = get_BTC_5_min_volume()
     print()
-    vol_time = convert_seconds(time3)
+    vol_time = convert_seconds(time)
     print(vol_time)
-    print('5 minute volume: ', volume3)
-    logging.info('From: {}, Vol: {}'.format(vol_time, volume3))
-    
-    #---SEND TO MOTOR CONTROL
-    if volume3 < 2500:
-      motor_steps = int(volume3 * 3)
-      steps(motor_steps)
-    else:
-      motor_steps = 8000
+    print('5 minute volume: ', new_volume)
+    logging.info('From: {}, Vol: {}'.format(vol_time, new_volume))
+    run_motor(new_volume) # Send new_volume to motor 
     time.sleep(65) # wait a bit more than a minute to escape if = true
 
   else:
@@ -224,35 +219,4 @@ while True: # main loop
 
 '''
 
-'''
-# CALIBRATION CODE
 
-def autocalibrate(): #reverse 'last positions' for autocalibration
-  global m0
-  global m1
-  global m2
-  global m3
-  f_in = open('last_positions', 'rt') 
-  read_str = f_in.read()
-  f_in.close()
-  
-  read_pos_list = read_str.split()
-  print(read_pos_list)
-  # turn each element of the list into an int and reverse its sign
-  recalib_m0 = (int(read_pos_list[0])) * -1
-  recalib_m1 = (int(read_pos_list[1])) * -1
-  recalib_m2 = (int(read_pos_list[2])) * -1
-  recalib_m3 = (int(read_pos_list[3])) * -1
-  m0steps_8(recalib_m0)
-  m1steps_8(recalib_m1)
-  m2steps_8(recalib_m2)
-  m3steps_8(recalib_m3)
-  
-  #Reset each motor to 0
-  m0 = 0
-  m1 = 0
-  m2 = 0
-  m3 = 0
-
-#GPIO.cleanup()
-'''
